@@ -10,3 +10,8 @@ Annotation_new routine - corrected version of lat, lon conversion formula and th
 
 json_creator routine - get the json for training and validation, passing to the models.
 
+### In progress
+
+Running the routine with Detectron API.
+Make the annotation routine flexible with the resolution (add the resolution parameter assertion, factor per resolution).
+

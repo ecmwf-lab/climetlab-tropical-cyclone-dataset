@@ -5,8 +5,9 @@ import collections
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('filepath', default='', help='path to the original annotation csv file')
-parser.add_argument('outfile', default='', help='output file name for the formatted csv')
+parser.add_argument('--filepath', default='', help='path to the original annotation csv file')
+parser.add_argument('--outfile', default='', help='output file name for the formatted csv')
+parser.add_argument('--input_size', default='', help='Provide the input image size as a tuple (lon, lat)')
 
 class XYLatLonConversion:
     def __init__(self, xmin, xmax, ymin, ymax, lonmin, lonmax, latmin, latmax):
@@ -40,33 +41,55 @@ class XYLatLonConversion:
             self._linear(lat, self.lat1, self.lat2, self.y1, self.y2),
         )
 
-cvt = XYLatLonConversion(0,3600,0,1200,0,360,60,-60)
+#cvt = XYLatLonConversion(0,3600,0,1200,0,360,60,-60)
+#cvt = XYLatLonConversion(0,1440,0,481,0,360,60,-60)
 
+def name_creator(filenames_list):
+	"""
+	filenames_list: list of filenames
+	"""
 
-def csv_creator(filepath, outfile):
+	fname = []
+	
+	# Prepare the names in the required format
+	for filename in filenames_list:
+		name = 'ssd_' + filename.split(' ')[0][:4] + filename.split(' ')[0][5:7] + filename.split(' ')[0][8:] + '_' + filename.split(' ')[1][:2] + '.png'
+		fname.append(name)
+	return fname
+
+def csv_creator(filepath, outfile, lon, lat):
+	"""
+	filepath: Original annotation csv file
+	outfile: Revised csv file name
+	lon: Longitude max value in input
+	lat: Latitude max value in input
+	"""
+
+	# Read the original CSV
 	annotation_data = pd.read_csv(filepath)
 
+	# Get the required data series from dataframe as lists
+	
 	filenames = list(annotation_data['DateTime'])
 	lat_p = list(annotation_data['lat_p'])
 	lon_p = list(annotation_data['lon_p'])
 	labels = annotation_data['labels']
 
+	# Declare all the new lists to be populated
 	fname = []
 	xmin = []
 	ymin = []
 	w = []
 	h = []
-	supercategory = []
 	height = []
 	width = []
-	category_id = []
 	area = []
 	crowd = []
 
-	for filename in filenames:
-		name = 'ssd_' + filename.split(' ')[0][:4] + filename.split(' ')[0][5:7] + filename.split(' ')[0][8:] + '_' + filename.split(' ')[1][:2] + '.png'
-		fname.append(name)
+	# Name convention for the files
+	fname = name_creator(filenames)
 
+	# Handle cases where lon values exceed the limits
 	for x, y in zip(lat_p, lon_p):
 		Cx, Cy = cvt.latlon_to_xy(x, y)
 		if (Cy - 10) < 0:
@@ -79,22 +102,18 @@ def csv_creator(filepath, outfile):
 			area.append(400)
 		xmin.append(int(Cx - 10))
 		w.append(20)
-		supercategory.append('none')
-		height.append(1201)
-		width.append(3600)
-		category_id.append(0)
+		height.append(lat)
+		width.append(lon)
 		crowd.append(0)
 
-
+	# Convert all the lists to series
 	fname = pd.Series(fname)
 	xmin = pd.Series(xmin)
 	ymin = pd.Series(ymin)
 	w = pd.Series(w)
 	h = pd.Series(h)
-	supercategory = pd.Series(supercategory)
 	height = pd.Series(height)
 	width = pd.Series(width)
-	category_id = pd.Series(category_id)
 	crowd = pd.Series(crowd)
 	area = pd.Series(area)
 
@@ -123,11 +142,9 @@ def csv_creator(filepath, outfile):
 	df['w'] = w
 	df['h'] = h
 	df['name'] = labels
-	df['supercategory'] = supercategory
 	df['id'] = ids
 	df['height'] = height
 	df['width'] = width
-	df['category_id'] = category_id
 	df['iscrowd'] = crowd
 	df['area'] = area
 
@@ -138,5 +155,10 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	filepath = args.filepath
 	outfile = args.outfile
+	input_size = args.input_size
 
-	csv_creator(filepath, outfile)
+	lon, lat = int(input_size[0]), int(input_size[1])
+
+	cvt = XYLatLonConversion(0,lon,0,lat,0,360,60,-60)
+
+	csv_creator(filepath, outfile, lon, lat)

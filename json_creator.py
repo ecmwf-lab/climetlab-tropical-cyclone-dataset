@@ -53,7 +53,7 @@ def json_annotator(csv_file, outfile):
 			"iscrowd": row['iscrowd'],
 			"image_id": row['id'],
 			"bbox": [row['xmin'], row['ymin'], row['w'], row['h']],
-			"category_id": int(row['category_id']),
+			#"category_id": int(row['category_id']),
 			"ignore": 0,
 			"segmentation": [],
 		}

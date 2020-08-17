@@ -7,7 +7,9 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--filepath', default='', help='path to the original annotation csv file')
 parser.add_argument('--outfile', default='', help='output file name for the formatted csv')
-parser.add_argument('--input_size', default='', help='Provide the input image size as a tuple (lon, lat)')
+parser.add_argument('--lon', default='', help='longitude value')
+parser.add_argument('--lat', default='', help='latitude value')
+#parser.add_argument('--input_size', default='', help='Provide the input image size as a tuple (lon, lat)')
 
 class XYLatLonConversion:
     def __init__(self, xmin, xmax, ymin, ymax, lonmin, lonmax, latmin, latmax):
@@ -155,9 +157,11 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	filepath = args.filepath
 	outfile = args.outfile
-	input_size = args.input_size
+	#input_size = args.input_size
+	lon = int(args.lon)
+	lat = int(args.lat)
 
-	lon, lat = int(input_size[0]), int(input_size[1])
+	#lon, lat = int(input_size[0]), int(input_size[1])
 
 	cvt = XYLatLonConversion(0,lon,0,lat,0,360,60,-60)
 

@@ -54,15 +54,15 @@ def json_annotator(csv_file, outfile):
 			"image_id": row['id'],
 			"bbox": [row['xmin'], row['ymin'], row['w'], row['h']],
 			#"category_id": int(row['category_id']),
-			"category_id": int(row['name'][-1]),
+			"category_id": int(row['name'][-1]) + 1,
 			"ignore": 0,
-			"segmentation": [],
+			#"segmentation": [],
 		}
 
 		json_dict['annotations'].append(annot)
 
 		#cat = {"supercategory": "none", "id": int(row['name'][-1]), "name": row['name']}
-		cat = {"id": int(row['name'][-1]), "name": row['name']}
+		cat = {"id": int(row['name'][-1]) + 1, "name": row['name']}
 
 		json_dict['categories'].append(cat)
 

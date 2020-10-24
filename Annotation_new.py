@@ -5,10 +5,10 @@ import collections
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--filepath', default='', help='path to the original annotation csv file')
-parser.add_argument('--outfile', default='', help='output file name for the formatted csv')
-parser.add_argument('--lon', default='', help='longitude value')
-parser.add_argument('--lat', default='', help='latitude value')
+parser.add_argument('filepath', default='', help='path to the original annotation csv file') #newlabels.csv
+parser.add_argument('outfile', default='', help='output file name for the formatted csv')
+parser.add_argument('lon', default='', help='longitude value')
+parser.add_argument('lat', default='', help='latitude value')
 #parser.add_argument('--input_size', default='', help='Provide the input image size as a tuple (lon, lat)')
 
 class XYLatLonConversion:
@@ -94,16 +94,16 @@ def csv_creator(filepath, outfile, lon, lat):
 	# Handle cases where lon values exceed the limits
 	for x, y in zip(lat_p, lon_p):
 		Cx, Cy = cvt.latlon_to_xy(x, y)
-		if (Cy - 10) < 0:
+		if (Cy - 40) < 0:
 			ymin.append(0)
-			h.append(int(20 - (-1 * (Cy-10))))
-			area.append(int(20 - (-1 * (Cy-10))) * 20)
+			h.append(int(80 - (-1 * (Cy-40))))
+			area.append(int(80 - (-1 * (Cy-40))) * 80)
 		else:
-			ymin.append(int(Cy - 10))
-			h.append(20)
-			area.append(400)
-		xmin.append(int(Cx - 10))
-		w.append(20)
+			ymin.append(int(Cy - 40))
+			h.append(80)
+			area.append(6400)
+		xmin.append(int(Cx - 40))
+		w.append(80)
 		height.append(lat)
 		width.append(lon)
 		crowd.append(0)

@@ -85,9 +85,7 @@ class SimSat(Dataset):
 
         self._fields = []
         for c, s in enumerate(source):
-            d: datetime = s.datetime()
-            if c % 2 is not 0:
-                d += datetime.timedelta(hours=6)
+            d = s.datetime() + datetime.timedelta(hours=[0, 6][c % 2])
             self._fields.append((s, labels.label(d)))
 
     def fields(self):

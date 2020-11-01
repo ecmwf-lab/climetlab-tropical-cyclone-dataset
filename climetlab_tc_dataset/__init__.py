@@ -76,6 +76,7 @@ class SimSat(Dataset):
             time=[0, 12],
             step=[0, 6],
             grid=[0.1, 0.1],
+            area=[60.0, 0.0, -60.0, 360.0],
             type="ssd",
             channel="9",
             ident="57",

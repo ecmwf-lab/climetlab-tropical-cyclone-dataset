@@ -22,7 +22,7 @@ def normalise_01(a):
 
 class Labels:
     def __init__(self, filename):
-        self.df = pd.read_csv(path.join(path.dirname(__file__), filename))
+        self.df = pd.read_csv(filename)
 
         # keep only: DateTime, lat_p, lon_p, pres
         self.df["DateTime"] = pd.to_datetime(self.df["DateTime"])
@@ -56,7 +56,7 @@ class Labels:
 
 
 # labels file
-labels = Labels("tc_an.csv")
+labels = Labels(path.join(path.dirname(__file__), "tc_an.csv"))
 date = "{}/to/{}".format(labels.datetime_min().date(), labels.datetime_max().date())
 print("labels: date={}".format(date))
 
@@ -82,6 +82,16 @@ class SimSat(Dataset):
             ident="57",
             instrument="207",
         )
+        # source = load_source(
+        #     "mars",
+        #     param="t",
+        #     level=1000,
+        #     date="20201030/to/20201031",
+        #     type="fc",
+        #     time=[0, 12],
+        #     step=[0, 6],
+        #     grid=[3.0, 3.0],
+        # )
         self.source = source
 
         self._fields = []

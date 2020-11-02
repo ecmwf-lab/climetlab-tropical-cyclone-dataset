@@ -20,6 +20,41 @@ def normalise_01(a):
     return (a - np.amin(a)) / (np.amax(a) - np.amin(a))
 
 
+class XYLatLonConversion:
+    def __init__(self, x1, x2, y1, y2, lon1, lon2, lat1, lat2):
+        assert x1 != x2 and y1 != y2
+        self.x1 = x1
+        self.x2 = x2
+        self.y1 = y1
+        self.y2 = y2
+
+        assert lon1 != lon2 and lat1 != lat2
+        self.lon1 = lon1
+        self.lon2 = lon2
+        self.lat1 = lat1
+        self.lat2 = lat2
+
+    @staticmethod
+    def _linear(x, x1, x2, y1, y2):
+        return (y2 * (x - x1) - y1 * (x - x2)) / (x2 - x1)
+
+    def xy_to_latlon(self, x, y):
+        return (
+            self._linear(y, self.y1, self.y2, self.lat1, self.lat2),
+            self._linear(x, self.x1, self.x2, self.lon1, self.lon2),
+        )
+
+    def latlon_to_xy(self, lat, lon):
+        return (
+            self._linear(lon, self.lon1, self.lon2, self.x1, self.x2),
+            self._linear(lat, self.lat1, self.lat2, self.y1, self.y2),
+        )
+
+
+# cvt = XYLatLonConversion(0,3600,0,1200,0,360,60,-60)
+# cvt = XYLatLonConversion(0,1440,0,481,0,360,60,-60)
+
+
 class Labels:
     def __init__(self, filename):
         self.df = pd.read_csv(filename)

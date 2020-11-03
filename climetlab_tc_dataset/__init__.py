@@ -38,6 +38,10 @@ class XYLatLonConversion:
     def _linear(x, x1, x2, y1, y2):
         return (y2 * (x - x1) - y1 * (x - x2)) / (x2 - x1)
 
+    @staticmethod
+    def _delta_linear(x, x1, x2, y1, y2):
+        return abs(x * (y2 - y1) / (x2 - x1))
+
     def xy_to_latlon(self, x, y):
         return (
             self._linear(y, self.y1, self.y2, self.lat1, self.lat2),
@@ -48,6 +52,18 @@ class XYLatLonConversion:
         return (
             self._linear(lon, self.lon1, self.lon2, self.x1, self.x2),
             self._linear(lat, self.lat1, self.lat2, self.y1, self.y2),
+        )
+
+    def dxy_to_dlatlon(self, dx, dy):
+        return (
+            self._delta_linear(dy, self.y1, self.y2, self.lat1, self.lat2),
+            self._delta_linear(dx, self.x1, self.x2, self.lon1, self.lon2),
+        )
+
+    def dlatlon_to_dxy(self, dlat, dlon):
+        return (
+            self._delta_linear(dlon, self.lon1, self.lon2, self.x1, self.x2),
+            self._delta_linear(dlat, self.lat1, self.lat2, self.y1, self.y2),
         )
 
 

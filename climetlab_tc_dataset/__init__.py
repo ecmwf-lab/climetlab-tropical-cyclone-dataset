@@ -101,7 +101,7 @@ class Labels:
             return 1
         return 0
 
-    def label(self, date):
+    def labels(self, date):
         l = []
         for row in self.df[self.df["DateTime"] == date].itertuples():
             l.append(
@@ -111,8 +111,10 @@ class Labels:
 
 
 # labels file
-labels = Labels(path.join(path.dirname(__file__), "tc_an.csv"))
-date = "{}/to/{}".format(labels.datetime_min().date(), labels.datetime_max().date())
+all_labels = Labels(path.join(path.dirname(__file__), "tc_an.csv"))
+date = "{}/to/{}".format(
+    all_labels.datetime_min().date(), all_labels.datetime_max().date()
+)
 print("labels: date={}".format(date))
 
 
@@ -123,7 +125,7 @@ class SimSat(Dataset):
 
     def __init__(self, **req):
 
-        # retrieve, param=tcw
+        # set source(s)
         source = load_source(
             "mars",
             param="clbt",
@@ -147,12 +149,32 @@ class SimSat(Dataset):
         #     step=[0, 6],
         #     grid=[3.0, 3.0],
         # )
+        # retrieve, param=tcw
         self.source = source
 
+        # set coordinate conversion from first field
+        assert len(source) > 0
+        with source[0] as g:
+            grid = g.grid_definition()
+            shape = g.to_numpy().shape
+            self._coord = Coordinates(
+                0,
+                shape[1],
+                0,
+                shape[0],
+                grid["west"],
+                grid["east"],
+                grid["north"],
+                grid["south"],
+            )
+
+        # set fields (labeled)
         self._fields = []
-        for c, s in enumerate(source):
-            d = s.datetime() + datetime.timedelta(hours=[0, 6][c % 2])
-            self._fields.append((s, labels.label(d)))
+        for s in source:
+            labels = all_labels.labels(s.valid_datetime())
+            for l in labels:
+                l["x"], l["y"] = self._coord.latlon_to_xy(l["lat"], l["lon"])
+            self._fields.append((s, labels))
 
     def fields(self):
         return self._fields

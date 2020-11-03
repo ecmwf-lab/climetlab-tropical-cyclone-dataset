@@ -161,6 +161,10 @@ class SimSat(Dataset):
         # return "Total column water"
         return "Cloudy brightness temperature"
 
+    def grid_definition(self):
+        assert len(self.source) > 0
+        return self.source[0].grid_definition()
+
     # load_data is used by keras
     def load_data(self, normalise=True, test_size=0.74, shuffle=False, fields=False):
         data = []

@@ -156,12 +156,12 @@ class SimSat(Dataset):
         assert len(source) > 0
         with source[0] as g:
             grid = g.grid_definition()
-            shape = g.to_numpy().shape
+            ny, nx = g.shape
             self._coord = Coordinates(
                 0,
-                shape[1],
+                nx,
                 0,
-                shape[0],
+                ny,
                 grid["west"],
                 grid["east"],
                 grid["north"],

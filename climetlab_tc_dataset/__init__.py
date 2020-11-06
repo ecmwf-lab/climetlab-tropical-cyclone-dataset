@@ -8,12 +8,11 @@
 #
 
 
-from climetlab import Dataset, load_source
+from climetlab import Dataset, load_source, load_dataset
 
 from os import path
 import numpy as np
 import pandas as pd
-import datetime
 
 
 def normalise_01(a):
@@ -71,51 +70,28 @@ class Coordinates:
         )
 
 
-# cvt = Coordinates(0,3600,0,1200,0,360,60,-60)
-# cvt = Coordinates(0,1440,0,481,0,360,60,-60)
-
-
 class Labels:
-    def __init__(self, filename):
-        self.df = pd.read_csv(filename)
+    def __init__(self, filename, dt: str = "DateTime"):
+        self._dt = dt
+        self._df = pd.read_csv(filename)
+        self._df[dt] = pd.to_datetime(self._df[dt])
 
-        # keep only: DateTime, lat_p, lon_p, pres
-        self.df["DateTime"] = pd.to_datetime(self.df["DateTime"])
-        self.df.drop(
-            inplace=True, columns=["wind", "lat_w", "lon_w", "step", "windrad", "name"]
-        )
+    @property
+    def datetime(self):
+        return self._df[self._dt]
 
-    def datetime_min(self):
-        return min(self.df["DateTime"])
-
-    def datetime_max(self):
-        return max(self.df["DateTime"])
-
-    @staticmethod
-    def _class(p):
-        if p < 965:
-            return 3
-        if p < 990:
-            return 2
-        if p < 1005:
-            return 1
-        return 0
-
-    def labels(self, date):
-        l = []
-        for row in self.df[self.df["DateTime"] == date].itertuples():
-            l.append(
-                {"lat": row.lat_p, "lon": row.lon_p, "class": self._class(row.pres)}
-            )
-        return l
+    def lookup(self, datetime):
+        return self._df[self.datetime == datetime].to_dict("records")
 
 
-# labels file
-all_labels = Labels(path.join(path.dirname(__file__), "tc_an.csv"))
-date = "{}/to/{}".format(
-    all_labels.datetime_min().date(), all_labels.datetime_max().date()
-)
-print("labels: date={}".format(date))
+def klass(p):
+    if p < 965:
+        return 3
+    if p < 990:
+        return 2
+    if p < 1005:
+        return 1
+    return 0
 
 
 class SimSat(Dataset):
@@ -128,8 +104,8 @@ class SimSat(Dataset):
         # set source(s)
         source = load_source(
             "mars",
-            param="clbt",
-            date=date,
+            param="clbt",  # tcw
+            date="2016-04-01/to/2019-12-31",
             time=[0, 12],
             step=[0, 6],
             grid=[0.1, 0.1],
@@ -143,13 +119,12 @@ class SimSat(Dataset):
         #     "mars",
         #     param="t",
         #     level=1000,
-        #     date="20201030/to/20201031",
+        #     date="-1",
         #     type="fc",
         #     time=[0, 12],
         #     step=[0, 6],
         #     grid=[3.0, 3.0],
         # )
-        # retrieve, param=tcw
         self.source = source
 
         # set coordinate conversion from first field
@@ -168,12 +143,16 @@ class SimSat(Dataset):
                 grid["south"],
             )
 
-        # set fields (labeled)
+        # set fields and labels
+        self._labels = Labels(path.join(path.dirname(__file__), "tc_an.csv"))
+        # print("labels: date={}/to/{}".format(min(self._labels.datetime).date(), max(self._labels.datetime).date()))
+
         self._fields = []
         for s in source:
-            labels = all_labels.labels(s.valid_datetime())
+            labels = self._labels.lookup(s.valid_datetime())
             for l in labels:
-                l["x"], l["y"] = self._coord.latlon_to_xy(l["lat"], l["lon"])
+                l["x"], l["y"] = self._coord.latlon_to_xy(l["lat_p"], l["lon_p"])
+                l["class"] = klass(l["pres"])
             self._fields.append((s, labels))
 
     def fields(self):
@@ -220,3 +199,11 @@ class SimSat(Dataset):
 
 
 dataset = SimSat
+
+
+if __name__ == "__main__":
+    print("Hi!")
+    ds = load_dataset("tc-dataset")
+    print("Bye!")
+    # cvt = Coordinates(0, 3600, 0, 1200, 0, 360, 60, -60)
+    # cvt = Coordinates(0, 1440, 0, 481, 0, 360, 60, -60)

@@ -167,7 +167,7 @@ class SimSat(Dataset):
         return self.source[0].grid_definition()
 
     # load_data is used by keras
-    def load_data(self, normalise=True, test_size=0.74, fields=False):
+    def load_data(self, normalise=True, test_size=0.2664, fields=False):
         data = []
         for field, label in self._fields:
             if normalise:

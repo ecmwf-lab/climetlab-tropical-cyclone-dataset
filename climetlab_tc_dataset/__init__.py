@@ -167,7 +167,7 @@ class SimSat(Dataset):
         return self.source[0].grid_definition()
 
     # load_data is used by keras
-    def load_data(self, normalise=True, test_size=0.74, shuffle=False, fields=False):
+    def load_data(self, normalise=True, test_size=0.74, fields=False):
         data = []
         for field, label in self._fields:
             if normalise:
@@ -176,8 +176,6 @@ class SimSat(Dataset):
                 array = field.to_numpy()
             data.append((array, label, field))
 
-        if shuffle:
-            raise ValueError("This dataset does not support shuffle (intentionally).")
         half = int(len(data) * (1.0 - test_size))
 
         x_train, y_train, f_train = (

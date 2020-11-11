@@ -14,6 +14,8 @@ from os import path
 import numpy as np
 import pandas as pd
 
+from .labels import LabelsFromCSV
+
 
 def normalise_01(a):
     return (a - np.amin(a)) / (np.amax(a) - np.amin(a))
@@ -68,20 +70,6 @@ class Coordinates:
                 round(self._delta_linear(dlat, self.lat1, self.lat2, self.y1, self.y2))
             ),
         )
-
-
-class Labels:
-    def __init__(self, filename, dt: str = "DateTime"):
-        self._dt = dt
-        self._df = pd.read_csv(filename)
-        self._df[dt] = pd.to_datetime(self._df[dt])
-
-    @property
-    def datetime(self):
-        return self._df[self._dt]
-
-    def lookup(self, datetime):
-        return self._df[self.datetime == datetime].to_dict("records")
 
 
 def klass(p):
@@ -144,7 +132,7 @@ class SimSat(Dataset):
             )
 
         # set fields and labels
-        self._labels = Labels(path.join(path.dirname(__file__), "tc_an.csv"))
+        self._labels = LabelsFromCSV(path.join(path.dirname(__file__), "tc_an.csv"))
         # print("labels: date={}/to/{}".format(min(self._labels.datetime).date(), max(self._labels.datetime).date()))
 
         self._fields = []

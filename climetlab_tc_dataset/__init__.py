@@ -8,17 +8,19 @@
 #
 
 
-from climetlab import Dataset, load_source, load_dataset
-
 from os import path
 import numpy as np
-import pandas as pd
 
+from climetlab import Dataset, load_source
 from .labels import LabelsFromCSV
 
 
 def normalise_01(a):
     return (a - np.amin(a)) / (np.amax(a) - np.amin(a))
+
+
+def local_path(filename):
+    return path.join(path.dirname(__file__), filename)
 
 
 class Coordinates:
@@ -87,7 +89,7 @@ class SimSat(Dataset):
     home_page = "https://github.com/ecmwf/climetlab-ts-dataset"
     documentation = "Work in progress"
 
-    def __init__(self, **req):
+    def __init__(self, labels=LabelsFromCSV(local_path("tc_an.csv")), **req):
 
         # set source(s)
         source = load_source(
@@ -132,13 +134,13 @@ class SimSat(Dataset):
             )
 
         # set fields and labels
-        self._labels = LabelsFromCSV(path.join(path.dirname(__file__), "tc_an.csv"))
+        self._labels = labels
         # print("labels: date={}/to/{}".format(min(self._labels.datetime).date(), max(self._labels.datetime).date()))
 
         self._fields = []
         for s in source:
-            labels = self._labels.lookup(s.valid_datetime())
-            for l in labels:
+            label = self._labels.lookup(s.valid_datetime())
+            for l in label:
                 l["x"], l["y"] = self._coord.latlon_to_xy(l["lat_p"], l["lon_p"])
                 l["class"] = klass(l["pres"])
             self._fields.append((s, labels))

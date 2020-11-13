@@ -9,15 +9,30 @@
 
 
 import pandas as pd
-import datetime
 
-from . import Labels
 from climetlab import load_dataset
-from climetlab.utils import datetime as dt
+
+
+class Labels:
+    @property
+    def datetime(self):
+        return self._df[self._dt]
+
+    def lookup(self, datetime):
+        return self._df[self.datetime == datetime].to_dict("records")
+
+
+class LabelsFromCSV(Labels):
+    def __init__(self, filename, dt="DateTime", p="pres", lat="lat_p", lon="lon_p"):
+        self._dt = dt
+        self._df = pd.read_csv(filename)
+
+        self._df[dt] = pd.to_datetime(self._df[dt])
+        self._df.rename(columns={p: "pressure", lat: "lat", lon: "lon"}, inplace=True)
 
 
 class LabelsFromHURDAT2(Labels):
-    def __init__(self, dt: str = "time", basins=["atlantic", "pacific"]):
+    def __init__(self, dt="time", basins=["atlantic", "pacific"]):
         self._dt = dt
         self._df = pd.DataFrame()
 
@@ -30,12 +45,5 @@ class LabelsFromHURDAT2(Labels):
                     ignore_index=True,
                 )
 
-        assert not self._df.empty
+        assert all([c in self._df.columns for c in [dt, "lat", "lon", "pressure"]])
         self._df.sort_values(by=dt)
-
-    @property
-    def datetime(self):
-        return self._df[self._dt]
-
-    def lookup(self, datetime):
-        return self._df[self.datetime == dt.to_datetime(datetime)].to_dict("records")

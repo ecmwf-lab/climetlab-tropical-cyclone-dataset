@@ -134,16 +134,15 @@ class SimSat(Dataset):
             )
 
         # set fields and labels
-        self._labels = labels
-        # print("labels: date={}/to/{}".format(min(self._labels.datetime).date(), max(self._labels.datetime).date()))
+        # print("labels: date={}/to/{}".format(min(labels.datetime).date(), max(labels.datetime).date()))
 
         self._fields = []
         for s in source:
-            label = self._labels.lookup(s.valid_datetime())
+            label = labels.lookup(s.valid_datetime())
             for l in label:
-                l["x"], l["y"] = self._coord.latlon_to_xy(l["lat_p"], l["lon_p"])
-                l["class"] = klass(l["pres"])
-            self._fields.append((s, labels))
+                l["x"], l["y"] = self._coord.latlon_to_xy(l["lat"], l["lon"])
+                l["class"] = klass(l["pressure"])
+            self._fields.append((s, label))
 
     def fields(self):
         return self._fields
@@ -187,11 +186,3 @@ class SimSat(Dataset):
 
 
 dataset = SimSat
-
-
-if __name__ == "__main__":
-    print("Hi!")
-    ds = load_dataset("tc-dataset")
-    print("Bye!")
-    # cvt = Coordinates(0, 3600, 0, 1200, 0, 360, 60, -60)
-    # cvt = Coordinates(0, 1440, 0, 481, 0, 360, 60, -60)

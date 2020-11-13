@@ -12,7 +12,7 @@ from os import path
 import numpy as np
 
 from climetlab import Dataset, load_source
-from .labels import LabelsFromCSV
+from .labels import LabelsFromCSV, LabelsFromHURDAT2
 
 
 def normalise_01(a):

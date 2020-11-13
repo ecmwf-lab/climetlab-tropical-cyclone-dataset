@@ -12,7 +12,8 @@ from os import path
 import numpy as np
 
 from climetlab import Dataset, load_source
-from .labels import LabelsFromCSV, LabelsFromHURDAT2
+from .labels import *
+from .coordinates import Coordinates
 
 
 def normalise_01(a):
@@ -23,73 +24,19 @@ def local_path(filename):
     return path.join(path.dirname(__file__), filename)
 
 
-class Coordinates:
-    def __init__(self, x1, x2, y1, y2, lon1, lon2, lat1, lat2):
-        assert x1 != x2 and y1 != y2
-        self.x1 = float(x1)
-        self.x2 = float(x2)
-        self.y1 = float(y1)
-        self.y2 = float(y2)
-
-        assert lon1 != lon2 and lat1 != lat2
-        self.lon1 = float(lon1)
-        self.lon2 = float(lon2)
-        self.lat1 = float(lat1)
-        self.lat2 = float(lat2)
-
-    @staticmethod
-    def _linear(x, x1, x2, y1, y2):
-        return (y2 * (x - x1) - y1 * (x - x2)) / (x2 - x1)
-
-    @staticmethod
-    def _delta_linear(x, x1, x2, y1, y2):
-        return abs(x * (y2 - y1) / (x2 - x1))
-
-    def xy_to_latlon(self, x, y):
-        return (
-            self._linear(y, self.y1, self.y2, self.lat1, self.lat2),
-            self._linear(x, self.x1, self.x2, self.lon1, self.lon2),
-        )
-
-    def latlon_to_xy(self, lat, lon):
-        return (
-            int(round(self._linear(lon, self.lon1, self.lon2, self.x1, self.x2))),
-            int(round(self._linear(lat, self.lat1, self.lat2, self.y1, self.y2))),
-        )
-
-    def dxy_to_dlatlon(self, dx, dy):
-        return (
-            self._delta_linear(dy, self.y1, self.y2, self.lat1, self.lat2),
-            self._delta_linear(dx, self.x1, self.x2, self.lon1, self.lon2),
-        )
-
-    def dlatlon_to_dxy(self, dlat, dlon):
-        return (
-            int(
-                round(self._delta_linear(dlon, self.lon1, self.lon2, self.x1, self.x2))
-            ),
-            int(
-                round(self._delta_linear(dlat, self.lat1, self.lat2, self.y1, self.y2))
-            ),
-        )
+def fill_label(coord, l):
+    p = l["pressure"]
+    l["class"] = 3 if p < 965 else 2 if p < 990 else 1 if p < 1005 else 0
+    l["x"], l["y"] = coord.latlon_to_xy(l["lat"], l["lon"])
+    return l
 
 
-def klass(p):
-    if p < 965:
-        return 3
-    if p < 990:
-        return 2
-    if p < 1005:
-        return 1
-    return 0
-
-
-class SimSat(Dataset):
+class TCDataset(Dataset):
 
     home_page = "https://github.com/ecmwf/climetlab-ts-dataset"
     documentation = "Work in progress"
 
-    def __init__(self, labels=LabelsFromCSV(local_path("tc_an.csv")), **req):
+    def __init__(self, labels=local_path("tc_an.csv"), **req):
 
         # set source(s)
         source = load_source(
@@ -105,20 +52,10 @@ class SimSat(Dataset):
             ident="57",
             instrument="207",
         )
-        # source = load_source(
-        #     "mars",
-        #     param="t",
-        #     level=1000,
-        #     date="-1",
-        #     type="fc",
-        #     time=[0, 12],
-        #     step=[0, 6],
-        #     grid=[3.0, 3.0],
-        # )
+        assert len(source) > 0
         self.source = source
 
-        # set coordinate conversion from first field
-        assert len(source) > 0
+        # set coordinate conversion and title from first field
         with source[0] as g:
             grid = g.grid_definition()
             ny, nx = g.shape
@@ -133,23 +70,33 @@ class SimSat(Dataset):
                 grid["south"],
             )
 
-        # set fields and labels
+            m = g.metadata()
+            try:
+                self._title = m["shortName"]
+            except KeyError:
+                self._title = "unknown"
+
+        # set labels
+        if isinstance(labels, str):
+            labels = LabelsFromCSV(labels)
+
+        assert isinstance(labels, Labels), "Unsupported labels '%s' (%s)" % (
+            labels,
+            type(labels),
+        )
         # print("labels: date={}/to/{}".format(min(labels.datetime).date(), max(labels.datetime).date()))
 
+        # set fields (labeled)
         self._fields = []
         for s in source:
-            label = labels.lookup(s.valid_datetime())
-            for l in label:
-                l["x"], l["y"] = self._coord.latlon_to_xy(l["lat"], l["lon"])
-                l["class"] = klass(l["pressure"])
-            self._fields.append((s, label))
+            l = [fill_label(self._coord, lb) for lb in labels.lookup(s.valid_datetime())]
+            self._fields.append((s, l))
 
     def fields(self):
         return self._fields
 
     def title(self, label):
-        # return "Total column water"
-        return "Cloudy brightness temperature"
+        return self._title
 
     def grid_definition(self):
         assert len(self.source) > 0

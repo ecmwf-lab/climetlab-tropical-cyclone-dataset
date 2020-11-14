@@ -20,13 +20,13 @@ def read(fname):
     return io.open(file_path, encoding="utf-8").read()
 
 
-version = "0.0.1"
+version = "0.0.2"
 
 
 setuptools.setup(
     name="climetlab-tc-dataset",
     version=version,
-    description="Example CliMetLab external dataset plugin",
+    description="CliMetLab Tropical Cyclone datasets plugin",
     long_description=read("README.md"),
     author="European Centre for Medium-Range Weather Forecasts (ECMWF)",
     author_email="software.support@ecmwf.int",
@@ -36,7 +36,16 @@ setuptools.setup(
     include_package_data=True,
     install_requires=["xarray"],
     zip_safe=True,
-    entry_points={"climetlab.datasets": ["tc-dataset = climetlab_tc_dataset"]},
+    entry_points={
+        "climetlab.datasets": [
+            "tc-simsat-01  = climetlab_tc_dataset.tc_simsat_01",
+            "tc-simsat-025 = climetlab_tc_dataset.tc_simsat_025",
+            "tc-simsat-05  = climetlab_tc_dataset.tc_simsat_05",
+            "tc-tcw-01     = climetlab_tc_dataset.tc_tcw_01",
+            "tc-tcw-025    = climetlab_tc_dataset.tc_tcw_025",
+            "tc-tcw-05     = climetlab_tc_dataset.tc_tcw_05",
+        ]
+    },
     keywords="meteorology",
     classifiers=[
         "Development Status :: 3 - Alpha",

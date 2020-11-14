@@ -36,22 +36,10 @@ class TCDataset(Dataset):
     home_page = "https://github.com/ecmwf/climetlab-ts-dataset"
     documentation = "Work in progress"
 
-    def __init__(self, labels=local_path("tc_an.csv"), **req):
+    def __init__(self, labels, **req):
 
         # set source(s)
-        source = load_source(
-            "mars",
-            param="clbt",  # tcw
-            date="2016-04-01/to/2019-12-31",
-            time=[0, 12],
-            step=[0, 6],
-            grid=[0.1, 0.1],
-            area=[60.0, 0.0, -60.0, 360.0],
-            type="ssd",
-            channel="9",
-            ident="57",
-            instrument="207",
-        )
+        source = load_source("mars", **req)
         assert len(source) > 0
         self.source = source
 
@@ -124,4 +112,5 @@ class TCDataset(Dataset):
         return (x_train, y_train), (x_test, y_test)
 
 
-dataset = SimSat
+from .simsat import SimSat
+from .tcw import TCW

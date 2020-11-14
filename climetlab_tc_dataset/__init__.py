@@ -55,51 +55,43 @@ class TCDataset(Dataset):
         assert len(source) > 0
         self.source = source
 
-        # set coordinate conversion and title from first field
+        # set coordinate conversion from first field
         with source[0] as g:
-            grid = g.grid_definition()
             ny, nx = g.shape
+            area = req.get("area", [90.0, 0.0, -90.0, 360.0])
+            assert len(area) == 4
             self._coord = Coordinates(
                 0,
                 nx,
                 0,
                 ny,
-                grid["west"],
-                grid["east"],
-                grid["north"],
-                grid["south"],
+                area[1],
+                area[3],
+                area[0],
+                area[2],
             )
-
-            m = g.metadata()
-            try:
-                self._title = m["shortName"]
-            except KeyError:
-                self._title = "unknown"
 
         # set labels
         if isinstance(labels, str):
             labels = LabelsFromCSV(labels)
-
         assert isinstance(labels, Labels), "Unsupported labels '%s' (%s)" % (
             labels,
             type(labels),
         )
-        # print("labels: date={}/to/{}".format(min(labels.datetime).date(), max(labels.datetime).date()))
 
         # set fields (labeled)
         self._fields = []
         for s in source:
-            l = [fill_label(self._coord, lb) for lb in labels.lookup(s.valid_datetime())]
+            l = [fill_label(self._coord, l) for l in labels.lookup(s.valid_datetime())]
             self._fields.append((s, l))
 
     def fields(self):
         return self._fields
 
     def title(self, label):
-        return self._title
+        return self.source[0].metadata().get("shortName", "unknown")
 
     def grid_definition(self):
-        assert len(self.source) > 0
         return self.source[0].grid_definition()
 
     # load_data is used by keras

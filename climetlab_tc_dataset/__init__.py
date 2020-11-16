@@ -60,9 +60,8 @@ class TCDataset(Dataset):
             )
 
         # set labels
-        if isinstance(labels, str):
-            labels = LabelsFromCSV(labels)
-        assert isinstance(labels, Labels), "Unsupported labels '%s' (%s)" % (
+        _labels = LabelsFromCSV(labels) if isinstance(labels, str) else labels
+        assert isinstance(_labels, Labels), "Unsupported labels '%s' (%s)" % (
             labels,
             type(labels),
         )
@@ -70,7 +69,7 @@ class TCDataset(Dataset):
         # set fields (labeled)
         self._fields = []
         for s in source:
-            l = [fill_label(self._coord, l) for l in labels.lookup(s.valid_datetime())]
+            l = [fill_label(self._coord, l) for l in _labels.lookup(s.valid_datetime())]
             self._fields.append((s, l))
 
     def fields(self):
